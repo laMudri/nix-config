@@ -13,6 +13,7 @@
         clementine
         dunst
         emacs
+        evince
         feh
         firefox
         gimp
@@ -21,6 +22,7 @@
         htop
         keepassx2
         libnotify
+        libreoffice
         qbittorrent
         neovim
         numix-gtk-theme
@@ -44,6 +46,7 @@
         default-ghc
         default-tex
         #my-st
+        my-hunspell
         hoq
       ];
     };
@@ -82,6 +85,9 @@
       #  static char font[] = "DejaVu Sans Mono:pixelsize=13:antialias=true:hinting=true";
       #'';
     };
+
+    my-hunspell = hunspellWithDicts (with hunspellDicts;
+      [ en-gb-ize en-gb-ise ]);
 
     hoq = callPackage ../Downloads/hoq/default.nix { };
   };

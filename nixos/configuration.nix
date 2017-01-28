@@ -144,15 +144,8 @@ in
         #kde5.enable = true;
       };
       displayManager = {
-        lightdm.enable = true;
-        slim = {
-          enable = false;
-          defaultUser = "james";
-          extraConfig = ''
-            cursor left_ptr
-            hidecursor false
-          '';
-        };
+        lightdm.enable = false;
+        sddm.enable = true;
         sessionCommands = ''
           ${pkgs.networkmanagerapplet}/bin/nm-applet &
         ''; # + setLayoutCommands;
