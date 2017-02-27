@@ -2,7 +2,7 @@
 
 stdenv.mkDerivation rec {
   name = "ibus-table-agda-${version}";
-  version = "1.0.3";
+  version = "1.0.4";
 
   src = /home/james/repos/ibus-table-agda;
 

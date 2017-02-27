@@ -10,6 +10,7 @@
         ag
         AgdaStdlib
         autossh
+        bc
         clementine
         dunst
         emacs
@@ -19,6 +20,7 @@
         gimp
         git
         gnupg
+        gtk-engine-murrine
         htop
         keepassx2
         libnotify
@@ -33,6 +35,7 @@
         thunderbird
         tmux
         tree
+        unzip
         vlc
         volumeicon
         weechat
@@ -47,16 +50,19 @@
         default-tex
         #my-st
         my-hunspell
-        hoq
+        #hoq
       ];
     };
 
-    haskellPackages = super.haskellPackages.override {
-      overrides = self: super: {
-        Agda = self.callPackage ./Agda-2.5.2.nix {};
-      };
-    };
+    #haskellPackages = super.haskellPackages.override {
+    #  overrides = self: super: {
+    #    Agda = self.callPackage ./Agda-2.5.2.nix {};
+    #  };
+    #};
 
+    # Note: be more discerning with what is included in Hoogle and what isn't.
+    # pkgs/development/haskell-modules/default.nix has the definition of
+    # ghcWithHoogle.
     default-ghc = haskellPackages.ghcWithHoogle (h: with h; [
       Agda
       turtle

@@ -28,7 +28,7 @@ in
       version = 2;
       device = "/dev/sda";
     };
-    tmpOnTmpfs = true;
+    tmpOnTmpfs = false;
     extraModprobeConfig = ''
       options snd-hda-intel position_fix=1
     '';
@@ -77,13 +77,15 @@ in
   time.timeZone = "Europe/London";
 
   services = {
-    printing = {
-      enable = true;
-      clientConf = ''
-        ServerName cups-serv.cl.cam.ac.uk
-      '';
-      drivers = with pkgs; [ hplipWithPlugin ];
-    };
+  #  printing = {
+  #    enable = true;
+  #    clientConf = ''
+  #      ServerName cups-serv.cl.cam.ac.uk
+  #    '';
+  #    drivers = with pkgs; [ hplipWithPlugin ];
+  #  };
+
+    urxvtd.enable = true;
 
     xserver = {
       enable = true;
@@ -138,10 +140,11 @@ in
         #default = "none";
         xfce = {
           enable = true;
+          enableXfwm = false;
           #thunarPlugins = with pkgs.xfce;
           #[ thunar_volman thunar-archive-plugin tumbler ];
         };
-        #kde5.enable = true;
+        xterm.enable = false;
       };
       displayManager = {
         lightdm.enable = false;
@@ -165,7 +168,7 @@ in
     };
 
     fcron = {
-      enable = true;
+      enable = false;
       #systab = ''
       #  0 9 * * * cd /home/james/nixpkgs && notify-send "~/nixpkgs" "$(git fetch)"
       #'';
@@ -264,9 +267,6 @@ in
           ibus-table = pkgs.ibus-engines.table;
         };
       };
-      #xfce = super.xfce // {
-      #  xfce4panel = super.xfce.xfce4panel_gtk3;
-      #};
       xorg = super.xorg // rec {
         xkeyboardconfig-james =
         lib.overrideDerivation super.xorg.xkeyboardconfig (old: rec {
@@ -275,24 +275,18 @@ in
           patches = [ (relative "xkeyboard-config-james.patch") ];
         });
         xorgserver = lib.overrideDerivation super.xorg.xorgserver (old: {
-          postInstall = ''
-            rm -fr $out/share/X11/xkb/compiled
-            ln -s /var/tmp $out/share/X11/xkb/compiled
-            wrapProgram $out/bin/Xephyr \
-              --set XKB_BINDIR "${xkbcomp}/bin" \
-              --add-flags "-xkbdir ${xkeyboardconfig-james}/share/X11/xkb"
-            wrapProgram $out/bin/Xvfb \
-              --set XKB_BINDIR "${xkbcomp}/bin" \
-              --set XORG_DRI_DRIVER_PATH ${super.mesa}/lib/dri \
-              --add-flags "-xkbdir ${xkeyboardconfig-james}/share/X11/xkb"
-            ( # assert() keeps runtime reference xorgserver-dev in
-              # xf86-video-intel and others
-              cd "$dev"
-              for f in include/xorg/*.h; do # */
-                sed "1i#line 1 \"${old.name}/$f\"" -i "$f"
-              done
-            )
-          '';
+          #patches = [ (relative "xkeyboard-config-james.patch") ];
+          # See nixpkgs/pkgs/servers/x11/xorg/overrides.nix
+          configureFlags = [
+            "--enable-kdrive"
+            "--enable-xephyr"
+            "--enable-xcsecurity"
+            "--with-default-font-path="
+            "--with-xkb-bin-directory=${xorg.xkbcomp}/bin"
+            "--with-xkb-path=${xorg.xkeyboardconfig-james}/share/X11/xkb"
+            "--with-xkb-output=$out/share/X11/xkb/compiled"
+            "--enable-glamor"
+          ];
         });
         setxkbmap = lib.overrideDerivation super.xorg.setxkbmap (old: {
           postInstall = ''
