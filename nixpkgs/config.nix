@@ -3,35 +3,70 @@
 
   firefox.enableAdobeFlash = true;
 
+  # Needed for Clementine. Remove when possible.
+  permittedInsecurePackages = [
+    "libplist-1.12"
+  ];
+
   packageOverrides = super: let self = super.pkgs; in with self; {
+    pinned = import (fetchFromGitHub {
+      rev = "2180d2c1180b04b14877cccad841fdb06941255a";
+      sha256 = "0kf5babd9y7r5wz4982m637x65lh8m4qma6gpc9mix1bxp2bvh8q";
+      owner = "NixOS";
+      repo = "nixpkgs-channels";
+    }) { config.packageOverrides = s: {}; };
+
+    #inherit (pinned) AgdaStdlib;
+
     everything = buildEnv {
       name = "everything";
       paths = [
+        #pretty
+        abcde
         ag
         AgdaStdlib
+        anki
         autossh
         bc
-        clementine
-        dunst
+        cabal2nix
+        clementineFree
+        cmus
+        cmusfm
+        discord
+        #dunst
         emacs
         evince
         feh
         firefox
+        flac
         gimp
         git
+        gksu
         gnupg
+        go-mtpfs
         gtk-engine-murrine
         htop
-        keepassx2
+        ibus-qt
+        idris
+        imagemagick
+        inkscape
+        keepassxc
         libnotify
-        libreoffice
-        qbittorrent
-        neovim
+        #libreoffice
+        mp3gain
+        mpv
+        neovim #(neovim.override { withPyGUI = true; })
+        neovim-qt
         numix-gtk-theme
+        qbittorrent
+        qutebrowser
+        rlwrap
         rxvt_unicode-with-plugins
         scrot
-        spotify
+        smem
+        #spotify
         sxiv
+        termite
         thunderbird
         tmux
         tree
@@ -39,10 +74,16 @@
         vlc
         volumeicon
         weechat
+        (wine)
         xclip
+        xfce.xfce4-hardware-monitor-plugin
         zathura
 
         gnome3.baobab
+
+        rustChannels.stable.rust
+        #rustStable.rustc
+        #rustStable.cargo
 
         xorg.xkbcomp
 
@@ -51,14 +92,21 @@
         #my-st
         my-hunspell
         #hoq
+        #dem-plays
+        #tail-lfm
       ];
     };
 
-    #haskellPackages = super.haskellPackages.override {
-    #  overrides = self: super: {
-    #    Agda = self.callPackage ./Agda-2.5.2.nix {};
-    #  };
-    #};
+    # try changing `super' back to `pinned'
+    haskellPackages = super.haskellPackages.override {
+      overrides = self: super: {
+        #Agda = self.callPackage ./Agda-2.5.2.nix {};
+        dotenv = self.callPackage ../repos/dotenv-hs/package.nix {};
+        liblastfm = self.callPackage ../repos/liblastfm/package.nix {};
+        req = haskell.lib.dontCheck super.req;
+        xml-html-conduit-lens = self.callPackage ../repos/xml-html-conduit-lens/package.nix {};
+      };
+    };
 
     # Note: be more discerning with what is included in Hoogle and what isn't.
     # pkgs/development/haskell-modules/default.nix has the definition of
@@ -66,6 +114,10 @@
     default-ghc = haskellPackages.ghcWithHoogle (h: with h; [
       Agda
       turtle
+      #idris
+      stack
+      Cabal
+      cabal-install
     ]);
 
     default-tex = texlive.combine {
@@ -95,6 +147,14 @@
     my-hunspell = hunspellWithDicts (with hunspellDicts;
       [ en-gb-ize en-gb-ise ]);
 
-    hoq = callPackage ../Downloads/hoq/default.nix { };
+    hoq = callPackage ../Downloads/hoq/default.nix {
+      compiler = "ghc802";
+    };
+
+    dem-plays = callPackage ../repos/dem_plays/pkg.nix { };
+
+    tail-lfm = haskellPackages.callPackage ../repos/tail-lfm/pkg.nix { };
+
+    cmusfm = callPackage ./cmusfm.nix { };
   };
 }

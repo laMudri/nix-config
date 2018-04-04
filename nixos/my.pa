@@ -132,6 +132,9 @@ load-module module-role-cork
 load-module module-filter-heuristics
 load-module module-filter-apply
 
+### My own stuff
+load-module module-echo-cancel #source_name=analog_input_mic aec_method=webrtc format=s16le rate=8000 channels=1
+#set-default-source analog_input_mic
 
 ### Make some devices default
 #set-default-sink output

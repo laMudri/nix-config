@@ -27,6 +27,14 @@ in
       enable = true;
       version = 2;
       device = "/dev/sda";
+      extraEntries = ''
+        menuentry "Windows" {
+          insmod chain
+          insmod msdos
+          set root=(hd0,msdos2)
+          chainloader +1
+        }
+      '';
     };
     tmpOnTmpfs = false;
     extraModprobeConfig = ''
@@ -35,11 +43,11 @@ in
   };
 
   hardware = {
-    #pulseaudio = {
-    #  configFile = relative "my.pa";
-    #  enable = false;
-    #  support32Bit = true;
-    #};
+    pulseaudio = {
+      #configFile = relative "my.pa";
+      enable = true;
+      support32Bit = true;
+    };
     opengl.driSupport32Bit = true;
   };
 
@@ -77,13 +85,24 @@ in
   time.timeZone = "Europe/London";
 
   services = {
-  #  printing = {
-  #    enable = true;
-  #    clientConf = ''
-  #      ServerName cups-serv.cl.cam.ac.uk
-  #    '';
-  #    drivers = with pkgs; [ hplipWithPlugin ];
-  #  };
+    printing = {
+      enable = false;
+      drivers = with pkgs; [ hplipWithPlugin ];
+    };
+    dictd.enable = true;
+
+    sshd.enable = true;
+
+    illum.enable = true;
+
+    tor = {
+      enable = false;
+      extraConfig = ''
+        ExitNodes (jp)
+        StrictNodes 1
+      '';
+      torsocks.enable = true;
+    };
 
     urxvtd.enable = true;
 
@@ -124,9 +143,10 @@ in
       windowManager = {
         default = "xmonad";
         xmonad.enable = true;
+        xmonad.enableContribAndExtras = true;
         xmonad.extraPackages = haskellPackages: with haskellPackages; [
-          xmonad-contrib
-          xmonad-extras
+          #xmonad-contrib
+          #xmonad-extras
           regex-posix
           taffybar
           turtle
@@ -140,7 +160,7 @@ in
         #default = "none";
         xfce = {
           enable = true;
-          enableXfwm = false;
+          #enableXfwm = false;
           #thunarPlugins = with pkgs.xfce;
           #[ thunar_volman thunar-archive-plugin tumbler ];
         };
@@ -151,7 +171,7 @@ in
         sddm.enable = true;
         sessionCommands = ''
           ${pkgs.networkmanagerapplet}/bin/nm-applet &
-        ''; # + setLayoutCommands;
+        '';
       };
 
       autorun = true;
@@ -161,10 +181,11 @@ in
     dbus.enable = true;
 
     redshift = {
-      enable = false;
-      brightness = { day = "1"; night = "0.9"; };
-      latitude = "53.5";
-      longitude = "-1.7";
+      enable = true;
+      brightness = { day = "0.1"; night = "0.06"; };
+      #latitude = "53.5";
+      #longitude = "-1.7";
+      provider = "geoclue2";
     };
 
     fcron = {
@@ -189,11 +210,10 @@ in
       #taffybar
       volumeicon
 
-      #xfce.xfce4-hardware-monitor-plugin
-      xfce.xfce4_xkb_plugin
+      xfce.xfce4-hardware-monitor-plugin
+      #xfce.xfce4_xkb_plugin
 
-      kde5.breeze-qt4
-      kde5.breeze-qt5
+      breeze-qt5
       gnome3.gnome_themes_standard
     ];
     shells = [ "/run/current-system/sw/bin/zsh" ];
@@ -207,8 +227,8 @@ in
   i18n.inputMethod = {
     enabled = "ibus";
     ibus.engines = with pkgs.ibus-engines; [
-      anthy hangul table table-others shwa agda
-      # mozc
+      anthy hangul table table-others mozc
+      shwa agda
     ];
     fcitx.engines = with pkgs.fcitx-engines; [ anthy hangul table-other ];
   };
@@ -231,6 +251,7 @@ in
     fonts = with pkgs; [
       corefonts
       dejavu_fonts
+      emojione
       #fira-code
       inconsolata
       source-han-sans-japanese
@@ -254,19 +275,28 @@ in
   nixpkgs.config = {
     allowUnfree = true;
     virtualbox.enableExtensionPack = true;
-    packageOverrides = super: rec {
-      ibus-engines = {
-        inherit (super.ibus-engines) anthy hangul table;
-        table-others = pkgs.callPackage (relative "ibus-table-others") {
-          ibus-table = pkgs.ibus-engines.table;
+    packageOverrides = super: let self = super.pkgs; in with self; rec {
+      pinned = import (fetchFromGitHub {
+        rev = "96457d26dded05bcba8e9fbb9bf0255596654aab";
+        sha256 = "0qv8c60n9vyn1wsviwyxz6d0ayd1cy92jz9f59wgklss059kpzdp";
+        owner = "NixOS";
+        repo = "nixpkgs-channels";
+      }) { config.packageOverrides = s: { }; };
+
+      #inherit (pinned) ibus;
+
+      ibus-engines = super.ibus-engines // {
+        table-others = callPackage (relative "ibus-table-others") {
+          ibus-table = ibus-engines.table;
         };
-        shwa = pkgs.callPackage (relative "ibus-table-shwa") {
-          ibus-table = pkgs.ibus-engines.table;
+        shwa = callPackage (relative "ibus-table-shwa") {
+          ibus-table = ibus-engines.table;
         };
-        agda = pkgs.callPackage (relative "ibus-table-agda") {
-          ibus-table = pkgs.ibus-engines.table;
+        agda = callPackage (relative "ibus-table-agda") {
+          ibus-table = ibus-engines.table;
         };
       };
+
       xorg = super.xorg // rec {
         xkeyboardconfig-james =
         lib.overrideDerivation super.xorg.xkeyboardconfig (old: rec {
